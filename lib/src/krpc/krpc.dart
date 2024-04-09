@@ -4,11 +4,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:b_encode_decode/b_encode_decode.dart';
-import 'package:bittorrent_dht/src/extensions.dart';
 import 'package:bittorrent_dht/src/krpc/krpc_events.dart';
 import 'package:bittorrent_dht/src/krpc/query.dart';
 import 'package:bittorrent_dht/src/krpc/transaction.dart';
-import 'package:collection/collection.dart';
 import 'package:dtorrent_common/dtorrent_common.dart';
 import 'package:events_emitter2/events_emitter2.dart';
 import 'krpc_message.dart';
@@ -42,8 +40,6 @@ abstract class KRPC with EventsEmittable<KRPCEvent> {
 
   /// UDP port
   int? get port;
-
-  Iterable<QueryTransaction> get pendingQueries;
 
   /// Code	Description
   /// - `201`	Generic Error
@@ -104,15 +100,13 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
 
   final int _maxQuery;
 
-  @override
-  Iterable<QueryTransaction> get pendingQueries =>
-      _transactionsMap.where((element) => element.pending == true);
+  final Set<String> _pendingQueries = {};
 
   final int _timeOutTime;
 
   RawDatagramSocket? _socket;
 
-  final List<QueryTransaction> _transactionsMap = [];
+  final Map<String, QueryTransaction> _transactionsMap = {};
 
   final Map<String, String?> _transactionsValues = <String, String?>{};
 
@@ -221,8 +215,7 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
     if (isStopped) return;
 
     // print('Sending request $tid, currently pending requests: $_pendingQuery."');
-    var transaction = _transactionsMap.firstWhereOrNull(
-        (transaction) => transaction.transactionId == event.transacationId);
+    var transaction = _transactionsMap[event.transacationId];
     if (transaction != null) {
       _increasePendingQuery(transaction);
       transaction.timer = Timer(Duration(seconds: _timeOutTime),
@@ -234,12 +227,11 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
 
   String _recordTransaction(EVENT event, Node? queriedNode) {
     var tid = createTransactionId();
-    while (_transactionsMap
-        .any((transaction) => transaction.transactionId == tid)) {
+    while (_transactionsMap.containsKey(tid)) {
       tid = createTransactionId();
     }
-    _transactionsMap.add(QueryTransaction(
-        event: event, transactionId: tid, queriedNode: queriedNode));
+    _transactionsMap[tid] = QueryTransaction(
+        event: event, transactionId: tid, queriedNode: queriedNode);
     return tid;
   }
 
@@ -252,11 +244,12 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
   }
 
   QueryTransaction? _cleanTransaction(String id) {
-    var queryTransaction = _transactionsMap
-        .removeWhereAndReturn((transaction) => transaction.transactionId == id);
+    var queryTransaction = _transactionsMap.remove(id);
     queryTransaction?.timer?.cancel();
     _transactionsValues.remove(id);
-    if (pendingQueries.length < _maxQuery &&
+    _pendingQueries.remove(id);
+
+    if (_pendingQueries.length < _maxQuery &&
         _querySub != null &&
         _querySub!.isPaused) {
       _querySub?.resume();
@@ -300,10 +293,10 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
   }
 
   void _increasePendingQuery(QueryTransaction transaction) {
-    log('Current pending queries ${pendingQueries.length}',
+    log('Current pending queries ${_pendingQueries.length}',
         name: runtimeType.toString());
-    transaction.pending = true;
-    if (pendingQueries.length >= _maxQuery &&
+    _pendingQueries.add(transaction.transactionId);
+    if (_pendingQueries.length >= _maxQuery &&
         _querySub != null &&
         !_querySub!.isPaused) {
       log('max query count $_maxQuery reached, pausing ',
@@ -438,8 +431,7 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
   void _fireError(
       int code, String? tid, String msg, InternetAddress address, int port) {
     if (tid != null) {
-      var tr = _transactionsMap.removeWhereAndReturn(
-          (transaction) => transaction.transactionId == tid);
+      var tr = _transactionsMap.remove(tid);
       tr?.timer?.cancel();
       sendError(tid, address, port, code, msg);
     } else {
@@ -518,8 +510,8 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
     _globalTransactionId = 0;
     _globalTransactionIdBuffer[0] = 0;
     _globalTransactionIdBuffer[1] = 0;
-    for (var transaction in _transactionsMap) {
-      transaction.timer?.cancel();
+    for (var transaction in _transactionsMap.entries) {
+      transaction.value.timer?.cancel();
     }
     _transactionsMap.clear();
     _transactionsValues.clear();
