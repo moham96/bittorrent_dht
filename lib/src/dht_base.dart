@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:developer';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:events_emitter2/events_emitter2.dart';
+import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 import 'package:dtorrent_common/dtorrent_common.dart';
 
@@ -15,6 +15,8 @@ import 'kademlia/node_events.dart';
 import 'krpc/krpc.dart';
 import 'krpc/krpc_events.dart';
 import 'krpc/krpc_message.dart';
+
+var _log = Logger('DHT');
 
 /// DHT service
 ///
@@ -144,8 +146,10 @@ class DHT with EventsEmittable<DHTEvent> {
   }
 
   void _fireError(InternetAddress address, int port, int code, String msg) {
-    log('Got Error from $address:$port',
-        error: msg, name: runtimeType.toString());
+    _log.warning(
+      'Got Error from $address:$port',
+      msg,
+    );
     events.emit(DHTError(code: code, message: msg));
   }
 
@@ -186,8 +190,9 @@ class DHT with EventsEmittable<DHTEvent> {
     Timer.run(() => _krpc?.pong(tid, address, port));
     try {
       var id = ID.createID(idBytes, 0, 20);
-      log('Got ping from $address:$port id:${Uint8List.fromList(id.ids).toHexString()}',
-          name: runtimeType.toString());
+      _log.fine(
+        'Got ping from $address:$port id:${Uint8List.fromList(id.ids).toHexString()}',
+      );
       if (_canAdd(id)) {
         _tryToGetNode(address, port);
       } else {
@@ -201,8 +206,7 @@ class DHT with EventsEmittable<DHTEvent> {
 
   void _processAnnouncePeerRequest(List<int> idBytes, String tid,
       InternetAddress address, int port, dynamic data) {
-    log('Got announce peer request from $address:$port ',
-        name: runtimeType.toString());
+    _log.fine('Got announce peer request from $address:$port ');
     var infoHash = data['info_hash'] as List<int>;
     if (infoHash.length != 20) {
       _krpc?.sendError(tid, address, port, 203, 'Bad InfoHash');
@@ -315,8 +319,9 @@ class DHT with EventsEmittable<DHTEvent> {
       InternetAddress address, int port, dynamic data) {
     try {
       var qid = ID.createID(idBytes, 0, 20);
-      log('Got get peers request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
-          name: runtimeType.toString());
+      _log.fine(
+        'Got get peers request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+      );
       if (_canAdd(qid)) {
         // Don't miss any opportunity
         _tryToGetNode(address, port);
@@ -346,9 +351,8 @@ class DHT with EventsEmittable<DHTEvent> {
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
     try {
       var qid = ID.createID(idBytes, 0, 20);
-      log(
+      _log.fine(
         'Got get peers response from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
-        name: runtimeType.toString(),
       );
       var node = _root?.findNode(qid);
       if (node == null) return;
@@ -358,13 +362,11 @@ class DHT with EventsEmittable<DHTEvent> {
         token = String.fromCharCodes(data['token']);
       }
       if (token == null) {
-        log('Response Error',
-            error: 'Doesn\'t include Token', name: runtimeType.toString());
+        _log.warning('Response Error', 'Doesn\'t include Token');
       }
       var infoHash = data['__additional'];
       if (infoHash == null) {
-        log('Inner Error',
-            error: 'InfoHash don\'t match', name: runtimeType.toString());
+        _log.warning('Inner Error', 'InfoHash don\'t match');
       }
       // If not announced, then announce once
       if (infoHash != null &&
@@ -408,8 +410,7 @@ class DHT with EventsEmittable<DHTEvent> {
             }
           } catch (e) {
             // do nothing
-            log('Parse peer address error:',
-                error: e, name: runtimeType.toString());
+            _log.warning('Parse peer address error:', e);
           }
         });
       }
@@ -423,8 +424,8 @@ class DHT with EventsEmittable<DHTEvent> {
       InternetAddress address, int port, dynamic data) {
     try {
       var qid = ID.createID(idBytes, 0, 20);
-      log('Got find node request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
-          name: runtimeType.toString());
+      _log.fine(
+          'Got find node request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}');
       if (_canAdd(qid)) {
         // Don't miss any opportunity
         _tryToGetNode(address, port);
@@ -450,8 +451,9 @@ class DHT with EventsEmittable<DHTEvent> {
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
     try {
       var qid = ID.createID(idBytes, 0, 20);
-      log('Got find node response from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
-          name: runtimeType.toString());
+      _log.fine(
+        'Got find node response from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+      );
       if (qid == _root?.id) return;
       var node = _root?.findNode(qid);
       node?.responseSent();
@@ -487,8 +489,7 @@ class DHT with EventsEmittable<DHTEvent> {
           }
         }
       } catch (e) {
-        log('Process find_node response error:',
-            error: e, name: runtimeType.toString());
+        _log.fine('Process find_node response error:', e);
       }
     }
   }
@@ -511,8 +512,9 @@ class DHT with EventsEmittable<DHTEvent> {
   }
 
   void _requestGetPeers(Node node, String infoHash) {
-    log('requesting peers for infohash ${Uint8List.fromList(infoHash.runes.toList()).toHexString()} from node ${node.address?.address}:${node.port} ${Uint8List.fromList(node.id.ids).toHexString()}',
-        name: runtimeType.toString());
+    _log.fine(
+      'requesting peers for infohash ${Uint8List.fromList(infoHash.runes.toList()).toHexString()} from node ${node.address?.address}:${node.port} ${Uint8List.fromList(node.id.ids).toHexString()}',
+    );
     if (node.announced[infoHash] != null && node.announced[infoHash]!) {
       return;
     }
@@ -595,7 +597,7 @@ class DHT with EventsEmittable<DHTEvent> {
           _tryToGetNode(ip, port);
         }
       } catch (e) {
-        log('lookup host error:', error: e, name: runtimeType.toString());
+        _log.warning('lookup host error:', e);
       }
     }
   }

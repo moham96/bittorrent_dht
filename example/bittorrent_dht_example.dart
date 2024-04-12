@@ -1,10 +1,11 @@
-import 'dart:developer' as dev;
+import 'package:bittorrent_dht/src/dht_base.dart';
 import 'package:bittorrent_dht/src/dht_events.dart';
 import 'package:dtorrent_common/dtorrent_common.dart';
 
-import 'package:bittorrent_dht/bittorrent_dht.dart';
 import 'package:dtorrent_parser/dtorrent_parser.dart';
+import 'package:logging/logging.dart';
 
+var _log = Logger('Dht Example');
 void main() async {
   var torrent = await Torrent.parse('example/test7.torrent');
   var infohashStr = String.fromCharCodes(torrent.infoHashBuffer);
@@ -14,11 +15,11 @@ void main() async {
   var dhtListener = dht.createListener();
   dhtListener
     ..on<DHTError>((event) =>
-        dev.log('Error happend:', error: '[${event.code}]${event.message}'))
+        _log.warning('Error happend:', '[${event.code}]${event.message}'))
     ..on<NewPeerEvent>(
       (event) {
         if (test.add(event.address)) {
-          dev.log(
+          _log.info(
               'Found new peer address : ${event.address}  ， Have ${test.length} peers already');
         }
       },

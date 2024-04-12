@@ -13,9 +13,9 @@ dependencies:
   meta: ^1.9.1
   events_emitter2: ^1.0.3
   collection: ^1.17.0
+  logging: ^1.2.0
 dev_dependencies:
   lints: ^2.0.1
-  logging: ^1.2.0
   test: ^1.24.3
   dtorrent_parser: ^1.0.8
   analyzer: any

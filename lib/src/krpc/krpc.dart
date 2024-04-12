@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -9,6 +8,7 @@ import 'package:bittorrent_dht/src/krpc/query.dart';
 import 'package:bittorrent_dht/src/krpc/transaction.dart';
 import 'package:dtorrent_common/dtorrent_common.dart';
 import 'package:events_emitter2/events_emitter2.dart';
+import 'package:logging/logging.dart';
 import 'krpc_message.dart';
 import '../kademlia/id.dart';
 import '../kademlia/node.dart';
@@ -21,6 +21,8 @@ const Generic_Error = 201;
 const Server_Error = 202;
 const Protocal_Error = 203;
 const UnknownMethod_Error = 204;
+
+var _log = Logger('KRPC');
 
 abstract class KRPC with EventsEmittable<KRPCEvent> {
   /// Start KRPC service.
@@ -163,8 +165,7 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
       {Iterable<Node>? nodes,
       Iterable<CompactAddress>? peers,
       String? nodeId}) {
-    log('Sending getPeersResponse to ${address.address} ',
-        name: runtimeType.toString());
+    _log.fine('Sending getPeersResponse to ${address.address} ');
     if (isStopped || _socket == null) return;
     var message = getPeersResponse(tid, nodeId ?? _nodeId.toString(), token,
         nodes: nodes, peers: peers);
@@ -281,8 +282,7 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
                   datagram.address, datagram.port, datagram.data);
             }
           } catch (e) {
-            log('Process Receive Message Error',
-                error: e, name: runtimeType.toString());
+            _log.warning('Process Receive Message Error', e);
           }
         });
       }
@@ -293,14 +293,12 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
   }
 
   void _increasePendingQuery(QueryTransaction transaction) {
-    log('Current pending queries ${_pendingQueries.length}',
-        name: runtimeType.toString());
+    _log.fine('Current pending queries ${_pendingQueries.length}');
     _pendingQueries.add(transaction.transactionId);
     if (_pendingQueries.length >= _maxQuery &&
         _querySub != null &&
         !_querySub!.isPaused) {
-      log('max query count $_maxQuery reached, pausing ',
-          name: runtimeType.toString());
+      _log.fine('max query count $_maxQuery reached, pausing ');
       _querySub?.pause();
     }
   }
@@ -325,7 +323,7 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
     try {
       tid = String.fromCharCodes(data[TRANSACTION_KEY], 0);
     } catch (e) {
-      log('"Error parsing Tid', error: e, name: runtimeType.toString());
+      _log.warning('"Error parsing Tid', e);
     } //Error parsing Tid.
     // print('Request response for $tid, currently pending requests: $_pendingQuery.');
     if (tid == null) {
@@ -339,7 +337,7 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
     try {
       method = String.fromCharCodes(data[METHOD_KEY], 0, 1);
     } catch (e) {
-      log('Error parsing Method', error: e, name: runtimeType.toString());
+      _log.warning('Error parsing Method', e);
     }
     if (method == RESPONSE_KEY && data[RESPONSE_KEY] != null) {
       var idBytes = data[RESPONSE_KEY][ID_KEY];
@@ -388,8 +386,7 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
       if (queryKey == ANNOUNCE_PEER) {
         event = EVENT.ANNOUNCE_PEER;
       }
-      log('Received a Query request: $event, from $address : $port',
-          name: runtimeType.toString());
+      _log.fine('Received a Query request: $event, from $address : $port');
       var arguments = data[ARGUMENTS_KEY];
       if (event != null) {
         _fireQuery(event, idBytes, tid, address, port, arguments);
@@ -417,8 +414,8 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
 
   void _getError(
       String tid, InternetAddress address, int port, int code, String msg) {
-    log('Received an error message from ${address.address}:$port :',
-        error: '[$code]$msg', name: runtimeType.toString());
+    _log.fine('Received an error message from ${address.address}:$port :',
+        '[$code]$msg');
     events.emit(
         KRPCErrorEvent(address: address, port: port, code: code, msg: msg));
   }
@@ -435,7 +432,7 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
       tr?.timer?.cancel();
       sendError(tid, address, port, code, msg);
     } else {
-      log('UnSend Error:', error: '[$code]$msg', name: runtimeType.toString());
+      _log.warning('UnSend Error:', '[$code]$msg');
     }
   }
 
@@ -503,7 +500,7 @@ class _KRPC with EventsEmittable<KRPCEvent> implements KRPC {
   Future stop([dynamic reason]) async {
     if (_stopped) return;
     _stopped = true;
-    log('KRPC stopped , reason:', error: reason, name: runtimeType.toString());
+    _log.warning('KRPC stopped , reason:', reason);
     events.dispose();
     _socket?.close();
     _socket = null;
