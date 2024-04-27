@@ -24,3 +24,8 @@
 
 - switch to events_emitter2
 - some refactoring
+
+## 0.0.12
+- optimize
+- fix regressions
+- use logging package
