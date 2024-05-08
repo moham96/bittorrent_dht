@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:dtorrent_common/dtorrent_common.dart';
 import 'package:events_emitter2/events_emitter2.dart';
@@ -108,7 +107,7 @@ class Node with EventsEmittable<NodeEvent> {
     // TODO:Check
     _buckets ??= {
       for (var element
-          in Iterable.generate(id.byteLength * 8, (index) => Bucket(index)))
+          in Iterable.generate(id.length * 8, (index) => Bucket(index)))
         element: null
     };
     return _buckets!;
@@ -176,7 +175,7 @@ class Node with EventsEmittable<NodeEvent> {
   }
 
   int _getBucketIndex(ID id1) {
-    return id.differentLength(id1) - 1;
+    return id.differenceLength(id1) - 1;
   }
 
   void remove(Node node) {
@@ -205,7 +204,7 @@ class Node with EventsEmittable<NodeEvent> {
 
   @override
   String toString() {
-    return '${_compactAddress?.toString()} ${Uint8List.fromList(id.ids).toHexString()}';
+    return '${_compactAddress?.toString()} ${id.toHexString()}';
   }
 
   bool get isDisposed => _disposed;

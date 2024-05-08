@@ -1,19 +1,31 @@
+import 'package:dtorrent_common/dtorrent_common.dart';
+
 class Distance {
-  final List<int> _values;
+  final List<int> _buffer;
+
+  List<int> get buffer => _buffer;
 
   String? _str;
 
-  int get byteLength => _values.length;
+  String? _hexStr;
 
-  Distance(this._values);
+  int get length => _buffer.length;
 
+  Distance(this._buffer);
+  @Deprecated('use [] operator instead')
   int getValue(int index) {
-    return _values[index];
+    return _buffer[index];
+  }
+
+  // returns id as hex string
+  toHexString() {
+    _hexStr ??= _buffer.toHexString();
+    return _hexStr!;
   }
 
   @override
   String toString() {
-    _str ??= String.fromCharCodes(_values);
+    _str ??= String.fromCharCodes(_buffer);
     return _str!;
   }
 
@@ -23,9 +35,9 @@ class Distance {
   @override
   bool operator ==(other) {
     if (other is Distance) {
-      if (other.byteLength == byteLength) {
-        for (var i = 0; i < byteLength; i++) {
-          if (getValue(i) != other.getValue(i)) return false;
+      if (other.length == length) {
+        for (var i = 0; i < length; i++) {
+          if (this[i] != other[i]) return false;
         }
         return true;
       }
@@ -35,16 +47,16 @@ class Distance {
 
   bool operator >=(a) {
     if (a is Distance) {
-      if (a.byteLength == byteLength) {
-        for (var i = 0; i < byteLength; i++) {
-          if (a.getValue(i) > getValue(i)) return false;
+      if (a.length == length) {
+        for (var i = 0; i < length; i++) {
+          if (a[i] > this[i]) return false;
         }
         return true;
       } else {
-        throw 'Different bytelength can not compare';
+        throw 'can not compare different lengths';
       }
     } else {
-      throw 'Different type can not compare';
+      throw 'can not compare different type';
     }
   }
 
@@ -52,7 +64,7 @@ class Distance {
     if (a is Distance) {
       return a != this && this >= a;
     } else {
-      throw 'Different type can not compare';
+      throw 'can not compare different type';
     }
   }
 
@@ -60,7 +72,7 @@ class Distance {
     if (a is Distance) {
       return a > this;
     } else {
-      throw 'Different type can not compare';
+      throw 'can not compare different type';
     }
   }
 
@@ -68,7 +80,9 @@ class Distance {
     if (a is Distance) {
       return a != this && this <= a;
     } else {
-      throw 'Different type can not compare';
+      throw 'can not compare different types';
     }
   }
+
+  int operator [](int index) => _buffer[index];
 }

@@ -76,7 +76,7 @@ class DHT with EventsEmittable<DHTEvent> {
     _tokenGenerateTimer = Timer.periodic(Duration(minutes: 10), (timer) {
       _generateXorToken();
     });
-    var id = ID.randomID();
+    var id = ID.random();
     _krpc ??= KRPC.newService(id, timeout: udpTimeout, maxQuery: maxQeury);
     _port = await _krpc?.start(port);
     _krpcListener = _krpc?.createListener();
@@ -172,7 +172,7 @@ class DHT with EventsEmittable<DHTEvent> {
   void _processPong(
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
     try {
-      var id = ID.createID(idBytes, 0, 20);
+      var id = ID.fromBuffer(idBytes, 0, 20);
       if (_canAdd(id)) {
         _tryToGetNode(address, port);
       } else {
@@ -189,9 +189,9 @@ class DHT with EventsEmittable<DHTEvent> {
       int port, dynamic data) {
     Timer.run(() => _krpc?.pong(tid, address, port));
     try {
-      var id = ID.createID(idBytes, 0, 20);
+      var id = ID.fromBuffer(idBytes, 0, 20);
       _log.fine(
-        'Got ping from $address:$port id:${Uint8List.fromList(id.ids).toHexString()}',
+        'Got ping from $address:$port id:${id.toHexString()}',
       );
       if (_canAdd(id)) {
         _tryToGetNode(address, port);
@@ -243,7 +243,7 @@ class DHT with EventsEmittable<DHTEvent> {
 
   void _allFindNode(NodeBucketIsEmpty event) {
     var index = 159 - event.bucketIndex;
-    var id = ID.randomID(20);
+    var id = ID.random(20);
     var n = index ~/ 8; //Number of identical digits
     var offset = index.remainder(
         8); // How many bits are the same before the first differing digit
@@ -275,7 +275,7 @@ class DHT with EventsEmittable<DHTEvent> {
       newId[i] = r.nextInt(256);
     }
     try {
-      var nid = ID.createID(newId);
+      var nid = ID.fromBuffer(newId);
       // print('bucket $index Clear all and query the corresponding node ${nid.toString()}');
       _root?.forEach((node) {
         node.queried = false;
@@ -298,7 +298,7 @@ class DHT with EventsEmittable<DHTEvent> {
   }
 
   void _generateXorToken() {
-    var temp = ID.randomID(4);
+    var temp = ID.random(4);
     _xorToken[0] = temp.getValueAt(0);
     _xorToken[1] = temp.getValueAt(1);
     _xorToken[2] = temp.getValueAt(2);
@@ -318,9 +318,9 @@ class DHT with EventsEmittable<DHTEvent> {
   void processGetPeersRequest(List<int> idBytes, String tid,
       InternetAddress address, int port, dynamic data) {
     try {
-      var qid = ID.createID(idBytes, 0, 20);
+      var qid = ID.fromBuffer(idBytes, 0, 20);
       _log.fine(
-        'Got get peers request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+        'Got get peers request from $address:$port id:${qid.toHexString()}',
       );
       if (_canAdd(qid)) {
         // Don't miss any opportunity
@@ -350,9 +350,9 @@ class DHT with EventsEmittable<DHTEvent> {
   void _processGetPeersResponse(
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
     try {
-      var qid = ID.createID(idBytes, 0, 20);
+      var qid = ID.fromBuffer(idBytes, 0, 20);
       _log.fine(
-        'Got get peers response from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+        'Got get peers response from $address:$port id:${qid.toHexString()}',
       );
       var node = _root?.findNode(qid);
       if (node == null) return;
@@ -423,9 +423,9 @@ class DHT with EventsEmittable<DHTEvent> {
   void processFindNodeRequest(List<int> idBytes, String tid,
       InternetAddress address, int port, dynamic data) {
     try {
-      var qid = ID.createID(idBytes, 0, 20);
+      var qid = ID.fromBuffer(idBytes, 0, 20);
       _log.fine(
-          'Got find node request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}');
+          'Got find node request from $address:$port id:${qid.toHexString()}');
       if (_canAdd(qid)) {
         // Don't miss any opportunity
         _tryToGetNode(address, port);
@@ -450,9 +450,9 @@ class DHT with EventsEmittable<DHTEvent> {
   void _processFindNodeResponse(
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
     try {
-      var qid = ID.createID(idBytes, 0, 20);
+      var qid = ID.fromBuffer(idBytes, 0, 20);
       _log.fine(
-        'Got find node response from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+        'Got find node response from $address:$port id:${qid.toHexString()}',
       );
       if (qid == _root?.id) return;
       var node = _root?.findNode(qid);
@@ -481,7 +481,7 @@ class DHT with EventsEmittable<DHTEvent> {
     var nodes = data[NODES_KEY] as List<int>;
     for (var i = 0; i < nodes.length; i += 26) {
       try {
-        var id = ID.createID(nodes, i, 20);
+        var id = ID.fromBuffer(nodes, i, 20);
         if (_canAdd(id)) {
           var p = CompactAddress.parseIPv4Address(nodes, i + 20);
           if (p != null) {
@@ -497,7 +497,7 @@ class DHT with EventsEmittable<DHTEvent> {
   @protected
   List<Node>? findClosestNode(List<int> idBytes) {
     try {
-      var id = ID.createID(idBytes, 0, 20);
+      var id = ID.fromBuffer(idBytes, 0, 20);
       var node = _root?.findNode(id);
       List<Node> nodes = [];
       if (node == null) {
@@ -513,7 +513,7 @@ class DHT with EventsEmittable<DHTEvent> {
 
   void _requestGetPeers(Node node, String infoHash) {
     _log.fine(
-      'requesting peers for infohash ${Uint8List.fromList(infoHash.runes.toList()).toHexString()} from node ${node.address?.address}:${node.port} ${Uint8List.fromList(node.id.ids).toHexString()}',
+      'requesting peers for infohash ${Uint8List.fromList(infoHash.runes.toList()).toHexString()} from node ${node.address?.address}:${node.port} ${node.id.toHexString()}',
     );
     if (node.announced[infoHash] != null && node.announced[infoHash]!) {
       return;

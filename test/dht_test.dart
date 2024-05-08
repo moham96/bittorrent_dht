@@ -17,7 +17,7 @@ void main() {
       void createPartSameId(int index) {
         var l = index + 1;
         index = 159 - index;
-        var id = ID.randomID(20);
+        var id = ID.random(20);
         var n = index ~/ 8; //Number of identical digits
         var offset = index.remainder(
             8); // How many bits are the same before the first differing digit
@@ -48,9 +48,9 @@ void main() {
         for (var i = j + 1; i < 20; i++) {
           newId[i] = r.nextInt(256);
         }
-        var nid = ID.createID(newId);
+        var nid = ID.fromBuffer(newId);
 
-        assert(nid.differentLength(id) == l);
+        assert(nid.differenceLength(id) == l);
       }
 
       for (var i = -1; i < 160; i++) {
@@ -115,8 +115,8 @@ void main() {
 
     test('add node', () {
       var root = Bucket(5);
-      var node = Node(ID.randomID(idByteLength), null);
-      var node2 = Node(ID.randomID(idByteLength), null);
+      var node = Node(ID.random(idByteLength), null);
+      var node2 = Node(ID.random(idByteLength), null);
 
       var nullNode = root.addNode(null);
       assert(nullNode == null);
@@ -172,16 +172,16 @@ void main() {
 
     test('find node', () {
       var root = Bucket(5);
-      var id1 = ID.randomID(idByteLength);
-      var id2 = ID.randomID(idByteLength);
-      var id3 = ID.randomID(idByteLength);
+      var id1 = ID.random(idByteLength);
+      var id2 = ID.random(idByteLength);
+      var id3 = ID.random(idByteLength);
       var node = Node(id1, null);
       var node2 = Node(id2, null);
       var node3 = Node(id3, null);
       root.addNode(node);
       root.addNode(node2);
       root.addNode(node3);
-      assert(root.findNode(ID.randomID(idByteLength)) == null,
+      assert(root.findNode(ID.random(idByteLength)) == null,
           'its impossible! unless the random bytes is same');
       assert(root.findNode(id1)?.node == node, 'search error');
       assert(root.findNode(id2)?.node != node, 'search error');
@@ -190,9 +190,9 @@ void main() {
 
     test('remove node', () {
       var root = Bucket(5);
-      var id1 = ID.randomID(idByteLength);
-      var id2 = ID.randomID(idByteLength);
-      var id3 = ID.randomID(idByteLength);
+      var id1 = ID.random(idByteLength);
+      var id2 = ID.random(idByteLength);
+      var id3 = ID.random(idByteLength);
       var nullNode = root.removeNode(id1);
       assert(nullNode == null);
       assert(root.isEmpty);
@@ -218,10 +218,10 @@ void main() {
 
   group('Nodes - ', () {
     test(' ID compare', () {
-      var id = ID.randomID(20);
+      var id = ID.random(20);
       var root = Node(id, null);
       var target = Node(id, null);
-      assert(root.id.differentLength(target.id) == 0);
+      assert(root.id.differenceLength(target.id) == 0);
 
       var id2 = <int>[];
       for (var i = 0; i < root.id.byteLength - 1; i++) {
@@ -234,14 +234,14 @@ void main() {
       }
       id2.add(l);
 
-      assert(root.id.differentLength(ID.createID(id2)) <= 8);
+      assert(root.id.differenceLength(ID.fromBuffer(id2)) <= 8);
     });
 
     test(' Find closest', () {
       var count = 40;
-      var root = Node(ID.randomID(20), null);
+      var root = Node(ID.random(20), null);
       for (var i = 0; i < count; i++) {
-        var n = Node(ID.randomID(20), null);
+        var n = Node(ID.random(20), null);
         root.add(n);
       }
       var id = <int>[];
@@ -254,7 +254,7 @@ void main() {
         l = Random().nextInt(256);
       }
       id.add(l);
-      var target = Node(ID.createID(id), null);
+      var target = Node(ID.fromBuffer(id), null);
       var re = root.findClosestNodes(target.id);
       assert(re.length == 8);
     });
@@ -262,9 +262,9 @@ void main() {
 
   group('KRPC - ', () {
     test('ping message', () {
-      var testId = ID.randomID(2);
+      var testId = ID.random(2);
       var tid = testId.toString();
-      var nid = ID.randomID(20).toString();
+      var nid = ID.random(20).toString();
       var bytes = pingMessage(tid, nid);
       var obj = decode(bytes);
       assert(String.fromCharCodes(obj['y']) == 'q', 'y error');
@@ -274,9 +274,9 @@ void main() {
     });
 
     test('ping response', () {
-      var testId = ID.randomID(2);
+      var testId = ID.random(2);
       var tid = testId.toString();
-      var nid = ID.randomID(20).toString();
+      var nid = ID.random(20).toString();
       var bytes = pongMessage(tid, nid);
       var obj = decode(bytes);
       assert(String.fromCharCodes(obj['y']) == 'r', 'y error');
@@ -285,9 +285,9 @@ void main() {
     });
 
     test('find_node message', () {
-      var testId = ID.randomID(2);
+      var testId = ID.random(2);
       var tid = testId.toString();
-      var nid = ID.randomID(20).toString();
+      var nid = ID.random(20).toString();
       var bytes = findNodeMessage(tid, nid, nid);
       var obj = decode(bytes);
       assert(String.fromCharCodes(obj['y']) == 'q', 'y error');
@@ -299,17 +299,17 @@ void main() {
     });
 
     test('find_node message', () {
-      var testId = ID.randomID(2);
+      var testId = ID.random(2);
       var tid = testId.toString();
-      var nid = ID.randomID(20).toString();
+      var nid = ID.random(20).toString();
       var nodes = <Node>[];
       var node1 = InternetAddress.tryParse('120.0.0.1');
       if (node1 != null) {
-        nodes.add(Node(ID.randomID(20), CompactAddress(node1, 2222)));
+        nodes.add(Node(ID.random(20), CompactAddress(node1, 2222)));
       }
       var node2 = InternetAddress.tryParse('196.168.0.1');
       if (node2 != null) {
-        nodes.add(Node(ID.randomID(20), CompactAddress(node2, 2223)));
+        nodes.add(Node(ID.random(20), CompactAddress(node2, 2223)));
       }
       var bytes = findNodeResponse(tid, nid, nodes);
       var obj = decode(bytes);
@@ -320,7 +320,7 @@ void main() {
       assert(nodeBytes.length == 26 * nodes.length);
       var rns = [];
       for (var i = 0; i < nodeBytes.length; i += 26) {
-        var id = ID.createID(nodeBytes, i, 20);
+        var id = ID.fromBuffer(nodeBytes, i, 20);
         var peerValue = CompactAddress.parseIPv4Address(nodeBytes, i + 20);
         rns.add(Node(id, peerValue));
       }
@@ -335,10 +335,10 @@ void main() {
     });
 
     test('get_peers message', () {
-      var testId = ID.randomID(2);
+      var testId = ID.random(2);
       var tid = testId.toString();
-      var nid = ID.randomID(20).toString();
-      var infoHash = ID.randomID(20).toString();
+      var nid = ID.random(20).toString();
+      var infoHash = ID.random(20).toString();
       var bytes = getPeersMessage(tid, nid, infoHash);
       var obj = decode(bytes);
       assert(String.fromCharCodes(obj['y']) == 'q', 'y error');
@@ -352,9 +352,9 @@ void main() {
     });
 
     test('get_peers response1', () {
-      var testId = ID.randomID(2);
+      var testId = ID.random(2);
       var tid = testId.toString();
-      var nid = ID.randomID(20).toString();
+      var nid = ID.random(20).toString();
       var peers = <CompactAddress>[];
 
       var r = Random();

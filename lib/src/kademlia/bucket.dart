@@ -97,8 +97,8 @@ class Bucket extends TreeNode with EventsEmittable<BucketEvent> {
 
   TreeNode _generateTreeNode(ID id) {
     TreeNode currentNode = this;
-    for (var byteIndex = id.byteLength - 1; byteIndex >= 0; byteIndex--) {
-      var byte = id.getValueAt(byteIndex);
+    for (var byteIndex = id.length - 1; byteIndex >= 0; byteIndex--) {
+      var byte = id[byteIndex];
       var base = BASE_NUM;
       for (var bitIndex = 0; bitIndex < 8; bitIndex++) {
         TreeNode? next;

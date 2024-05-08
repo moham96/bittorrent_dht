@@ -50,10 +50,10 @@ class TreeNode {
   }
 
   TreeNode? findNode(ID id, [int offset = 0]) {
-    if (offset >= id.byteLength * 8) return this;
+    if (offset >= id.length * 8) return this;
     var index = offset ~/ 8;
     var n = offset.remainder(8);
-    var number = id.getValueAt(id.byteLength - index - 1);
+    var number = id[id.length - index - 1];
     var base = BASE_NUM;
     base = base >> n;
     TreeNode? next;
