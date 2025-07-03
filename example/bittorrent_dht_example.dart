@@ -1,14 +1,27 @@
+import 'dart:io';
+
 import 'package:bittorrent_dht/src/dht_base.dart';
 import 'package:bittorrent_dht/src/dht_events.dart';
 import 'package:dtorrent_common/dtorrent_common.dart';
-
+import 'package:path/path.dart' as path;
 import 'package:dtorrent_parser/dtorrent_parser.dart';
 import 'package:logging/logging.dart';
 
 var _log = Logger('Dht Example');
+var scriptDir = path.dirname(Platform.script.path);
+var torrentsPath =
+    path.canonicalize(path.join(scriptDir, '..', '..', '..', 'torrents'));
 void main() async {
-  var torrent = await Torrent.parse('example/test7.torrent');
+  Logger.root.level = Level.INFO;
+  Logger.root.onRecord.listen((record) {
+    print(
+        '[${record.loggerName}] ${record.level.name}: ${record.time}: ${record.message}');
+  });
+
+  var torrent =
+      await Torrent.parse(path.join(torrentsPath, 'big-buck-bunny.torrent'));
   var infohashStr = String.fromCharCodes(torrent.infoHashBuffer);
+
   var dht = DHT();
   var test = <CompactAddress>{};
   dht.announce(infohashStr, 22123);
