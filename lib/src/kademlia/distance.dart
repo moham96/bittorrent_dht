@@ -33,11 +33,11 @@ class Distance {
     return false;
   }
 
-  bool operator >=(a) {
+  bool operator >(a) {
     if (a is Distance) {
       if (a.byteLength == byteLength) {
         for (var i = 0; i < byteLength; i++) {
-          if (a.getValue(i) > getValue(i)) return false;
+          if (getValue(i) < a.getValue(i)) return false;
         }
         return true;
       } else {
@@ -48,15 +48,7 @@ class Distance {
     }
   }
 
-  bool operator >(a) {
-    if (a is Distance) {
-      return a != this && this >= a;
-    } else {
-      throw 'Different type can not compare';
-    }
-  }
-
-  bool operator <=(a) {
+  bool operator <(a) {
     if (a is Distance) {
       return a > this;
     } else {
@@ -64,9 +56,17 @@ class Distance {
     }
   }
 
-  bool operator <(a) {
+  bool operator >=(a) {
     if (a is Distance) {
-      return a != this && this <= a;
+      return this == a || this > a;
+    } else {
+      throw 'Different type can not compare';
+    }
+  }
+
+  bool operator <=(a) {
+    if (a is Distance) {
+      return this == a || this < a;
     } else {
       throw 'Different type can not compare';
     }
