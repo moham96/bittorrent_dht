@@ -2,6 +2,8 @@
 
 Bittorrent DHT by Dart.
 
+[![codecov](https://codecov.io/gh/moham96/bittorrent_dht/branch/main/graph/badge.svg)](https://codecov.io/gh/moham96/bittorrent_dht)
+
 Support:
 
 - [BEP 0005 DHT Protocal](https://www.bittorrent.org/beps/bep_0005.html)
@@ -53,3 +55,25 @@ To stop `DHT` , invoke `stop` method:
 ```
 
 Once `DHT` stopped , each hanlder will be removed and nothing will be save. If user start `DHT` after it stopped , everything will be fresh.
+
+## Testing
+
+Run tests:
+```bash
+dart test
+```
+
+Run tests with coverage:
+```bash
+dart test --coverage=coverage
+dart run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info --packages=.dart_tool/package_config.json --report-on=lib
+```
+
+Or use the provided script:
+```bash
+dart tool/coverage.dart
+```
+
+The coverage report will be generated at `coverage/lcov.info` and can be viewed with tools like `genhtml` or uploaded to services like Codecov.
+
+Coverage is automatically uploaded to [Codecov](https://codecov.io) on every push and pull request via GitHub Actions.
