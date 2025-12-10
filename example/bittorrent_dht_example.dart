@@ -18,8 +18,8 @@ void main() async {
         '[${record.loggerName}] ${record.level.name}: ${record.time}: ${record.message}');
   });
 
-  var torrent =
-      await Torrent.parse(path.join(torrentsPath, 'big-buck-bunny.torrent'));
+  var torrent = await Torrent.parseFromFile(
+      path.join(torrentsPath, 'big-buck-bunny.torrent'));
   var infohashStr = String.fromCharCodes(torrent.infoHashBuffer);
 
   var dht = DHT();

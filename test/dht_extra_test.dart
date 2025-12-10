@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:test/test.dart';
 import 'package:bittorrent_dht/src/kademlia/distance.dart';
 import 'package:bittorrent_dht/src/kademlia/id.dart';

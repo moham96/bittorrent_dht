@@ -1,6 +1,6 @@
 name: bittorrent_dht
 description: A DHT protocal implemented by Dart. This package implemented BEP-0005 for torrent client
-version: 0.0.12
+version: 0.0.13
 repository: https://github.com/moham96/bittorrent_dht
 issue_tracker: https://github.com/moham96/bittorrent_dht/issues
 
@@ -18,6 +18,6 @@ dependencies:
 dev_dependencies:
   lints: ^2.0.1
   test: ^1.24.3
-  dtorrent_parser: ^1.0.8
+  dtorrent_parser: ^1.0.9
   analyzer: any
   coverage: ^1.15.0

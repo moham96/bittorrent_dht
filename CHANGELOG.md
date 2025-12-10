@@ -29,3 +29,11 @@
 - optimize
 - fix regressions
 - use logging package
+
+## 0.0.13
+- Fix distance operators
+- Update DHT example
+- Increase test coverage
+- Add Codecov configuration and CI workflow
+- Add Dependabot configuration for automated dependency updates
+- Update dtorrent_parser dependency to ^1.0.9
