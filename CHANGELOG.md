@@ -37,3 +37,7 @@
 - Add Codecov configuration and CI workflow
 - Add Dependabot configuration for automated dependency updates
 - Update dtorrent_parser dependency to ^1.0.9
+
+## 0.0.14
+- Update b_encode_decode dependency to ^1.0.5
+- Update dtorrent_common dependency to ^1.0.8
