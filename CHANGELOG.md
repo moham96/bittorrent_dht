@@ -41,3 +41,6 @@
 ## 0.0.14
 - Update b_encode_decode dependency to ^1.0.5
 - Update dtorrent_common dependency to ^1.0.8
+
+## 0.0.15
+- Only bootstrap once, allows for reuse of the service
