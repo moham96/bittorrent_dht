@@ -38,6 +38,7 @@ class DHT with EventsEmittable<DHTEvent> {
       <String, Queue<CompactAddress>>{};
 
   final Map<String, int> _announceTable = <String, int>{};
+  bool _bootstrapped = false;
 
   final List<Uri> _defaultBootstrapNodes = [
     Uri(host: 'router.bittorrent.com', port: 6881),
@@ -70,6 +71,9 @@ class DHT with EventsEmittable<DHTEvent> {
     int maxQeury = 24,
     int port = 0,
   }) async {
+    if (_bootstrapped) {
+      return _port;
+    }
     _cleanNodeTime = cleanNodeTime;
     _generateXorToken();
     _tokenGenerateTimer?.cancel();
@@ -123,6 +127,7 @@ class DHT with EventsEmittable<DHTEvent> {
     for (var url in _defaultBootstrapNodes) {
       addBootstrapNode(url);
     }
+    _bootstrapped = true;
     return _port;
   }
 
